@@ -1,0 +1,177 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Manager {
+  manager_id Int     @id @default(autoincrement())
+  email      String  @unique
+  password   String
+  name       String  @db.VarChar(5)
+  creator    String  @db.VarChar(5)
+  admin      Boolean @default(false)
+}
+
+model User {
+  email          String
+  name           String           @db.VarChar(5)
+  nickname       String           @unique @db.VarChar(15)
+  password       String?
+  gender         Gender           @default(ETC)
+  provider       Provider         @default(LOCAL)
+  date_of_birth  Int?
+  user_id        Int              @id @default(autoincrement())
+  created_at     DateTime         @default(now())
+  sns_id         String?
+  active         Boolean          @default(true)
+  coin           Coin?
+  comments       Comment[]
+  posts          Post[]
+  PostReward     PostReward?
+  from           Push[]           @relation("From")
+  to             Push[]           @relation("To")
+  quit           Quit?
+  reports        Report[]
+  scraps         Scrap[]
+  ScrapReward    ScrapReward?
+  subscriber     Subscribe[]      @relation("Subscriber")
+  subscribing    Subscribe[]      @relation("Subscribing")
+  SubscribeCount SubscribeCount[]
+}
+
+model Coin {
+  coin_id    Int      @id
+  coin       Int      @default(0)
+  coin_sum   Int      @default(0)
+  updated_at DateTime @default(now()) @updatedAt
+  user       User     @relation(fields: [coin_id], references: [user_id], onDelete: Cascade)
+}
+
+model Post {
+  imageURL   String[]
+  post_id    Int       @id @default(autoincrement())
+  scrap      Int       @default(0)
+  comment    Int       @default(0)
+  user_id    Int
+  updated_at DateTime  @default(now()) @updatedAt
+  user       User      @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  comments   Comment[]
+  Push       Push[]
+  report     Report[]
+  scraps     Scrap[]
+  vogue      Vogue?
+}
+
+model Vogue {
+  vogue_id Int  @id @default(autoincrement())
+  post_id  Int  @unique
+  quality  Int  @default(1)
+  post     Post @relation(fields: [post_id], references: [post_id], onDelete: Cascade)
+}
+
+model Comment {
+  content    String   @db.VarChar(255)
+  comment_id Int      @id @default(autoincrement())
+  post_id    Int
+  user_id    Int
+  updated_at DateTime @default(now()) @updatedAt
+  post       Post     @relation(fields: [post_id], references: [post_id], onDelete: Cascade)
+  user       User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+}
+
+model Report {
+  post_id Int
+  user_id Int
+  post    Post @relation(fields: [post_id], references: [post_id], onDelete: Cascade)
+  user    User @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@id([user_id, post_id])
+}
+
+model Scrap {
+  user_id Int
+  post_id Int
+  post    Post @relation(fields: [post_id], references: [post_id], onDelete: Cascade)
+  user    User @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@id([user_id, post_id])
+}
+
+model Quit {
+  quit_id    Int      @id @default(autoincrement())
+  user_id    Int      @unique
+  reason     String   @db.VarChar(100)
+  email      String   @unique
+  created_at DateTime @default(now())
+  user       User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+}
+
+model Push {
+  push_id    Int      @id @default(autoincrement())
+  user_id    Int
+  from_id    Int
+  type       String   @db.VarChar(10)
+  created_at DateTime @default(now())
+  post_id    Int?
+  imageURL   String?
+  from       User     @relation("From", fields: [from_id], references: [user_id], onDelete: Cascade)
+  post       Post?    @relation(fields: [post_id], references: [post_id], onDelete: Cascade)
+  user       User     @relation("To", fields: [user_id], references: [user_id], onDelete: Cascade)
+}
+
+model Shop {
+  shop_id  Int     @id @default(autoincrement())
+  name     String
+  link     String
+  stock    Boolean @default(true)
+  imageURL String
+  price    Int     @default(0)
+}
+
+model ScrapReward {
+  scrap_reward_id Int  @id @default(autoincrement())
+  user_id         Int  @unique
+  scrap           Int  @default(0)
+  count           Int  @default(0)
+  user            User @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+}
+
+model PostReward {
+  post_reward_id Int  @id @default(autoincrement())
+  user_id        Int  @unique
+  post           Int  @default(0)
+  user           User @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+}
+
+model SubscribeCount {
+  subscribe_count_id Int  @id @default(autoincrement())
+  user_id            Int  @unique
+  subscriber         Int  @default(0)
+  subscribing        Int  @default(0)
+  user               User @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+}
+
+model Subscribe {
+  subscriber_id  Int
+  subscribing_id Int
+  subscriber     User @relation("Subscriber", fields: [subscriber_id], references: [user_id], onDelete: Cascade)
+  subscribing    User @relation("Subscribing", fields: [subscribing_id], references: [user_id], onDelete: Cascade)
+
+  @@id([subscriber_id, subscribing_id])
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  ETC
+}
+
+enum Provider {
+  LOCAL
+  KAKAO
+  APPLE
+}

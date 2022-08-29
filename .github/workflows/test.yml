@@ -1,0 +1,36 @@
+name: push zip file to s3
+
+on:
+  push:
+    branches: [test]
+  pull_request:
+    branches: [test]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Zip
+        run: zip -r app.zip . -x node_modules/\* .github/\* .git/\* .gitignore dist/\* test/\* README.md
+
+      - name: Make dir
+        run: mkdir out
+
+      - name: Copy
+        run: cp app.zip out/app.zip
+
+      - name: Log
+        run: ls -a
+
+      - name: Deploy
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: Upload to S3
+        run: aws s3 cp --recursive --region ap-northeast-2 out s3://looknote-backend-test

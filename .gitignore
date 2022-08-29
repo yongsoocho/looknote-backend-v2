@@ -3,8 +3,6 @@
 /node_modules
 
 .env
-Dockerfile
-.dockerignore
 looknote-firebase-adminsdk-nxh3q-6c2064facd.json
 
 # Logs
